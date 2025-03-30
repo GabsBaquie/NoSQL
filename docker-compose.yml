@@ -1,0 +1,16 @@
+services:
+  express:
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+    environment:
+      DB_URL: ${URI_MONGO_DB}
+    restart: always
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo_container
+    ports:
+      - "27017:27017"
