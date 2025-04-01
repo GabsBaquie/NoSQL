@@ -51,4 +51,17 @@ router.put("/profiles/:id/information",
     controller.editInformation
 );
 
+
+// --------------------------------  BONUS -----------------------------
+
+// Route pour ajouter un ami
+router.post("/profiles/:id/friends/:friendId", controller.addFriend);
+
+// Route pour supprimer un ami
+router.delete("/profiles/:id/friends/:friendId", controller.removeFriend);
+
+// Route pour récupérer un profil avec les amis
+router.get("/profiles/:id/with-friends", controller.getProfileWithFriends);
+
+
 module.exports = router;

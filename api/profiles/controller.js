@@ -138,6 +138,47 @@ const editInformation = async (req, res) => {
     }
 }
 
+// ----------------------------- BONUS -----------------------------------
+
+
+// Ajoute un ami au profil
+const addFriend = async (req, res) => {
+    const { id, friendId } = req.params;
+    try {
+        const profile = await UserProfile.findById(id);
+        if (!profile.friends.includes(friendId)) {
+            profile.friends.push(friendId);
+            await profile.save();
+        }
+        res.json(profile);
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors de l'ajout de l'ami" });
+    }
+};
+
+// Supprime un ami du profil
+const removeFriend = async (req, res) => {
+    const { id, friendId } = req.params;
+    try {
+        const profile = await UserProfile.findById(id);
+        profile.friends = profile.friends.filter(friend => friend.toString() !== friendId);
+        await profile.save();
+        res.json(profile);
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors de la suppression de l'ami" });
+    }
+};
+
+// Récupère un profil avec les détails des amis
+const getProfileWithFriends = async (req, res) => {
+    try {
+        const profile = await UserProfile.findById(req.params.id).populate("friends", "name email _id");
+        res.json(profile);
+    } catch (err) {
+        res.status(500).json({ error: "Erreur lors de la récupération du profil avec les amis" });
+    }
+};
+
 module.exports = {
     getProfiles,
     getProfile,
@@ -148,5 +189,8 @@ module.exports = {
     deleteExperience,
     addSkill,
     deleteSkill,
-    editInformation
+    editInformation,
+    addFriend,
+    removeFriend,
+    getProfileWithFriends
 };

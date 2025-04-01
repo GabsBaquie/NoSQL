@@ -2,7 +2,7 @@ services:
   express:
     build: .
     ports:
-      - "3000:3000"
+      - "4000:3000"
     depends_on:
       - mongo
     environment:
