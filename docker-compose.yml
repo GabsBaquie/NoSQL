@@ -2,7 +2,7 @@ services:
   express:
     build: .
     ports:
-      - "4000:3000"
+      - "3000:3000"
     depends_on:
       - mongo
     environment:
@@ -14,3 +14,6 @@ services:
     container_name: mongo_container
     ports:
       - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example

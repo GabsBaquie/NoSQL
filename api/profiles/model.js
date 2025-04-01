@@ -18,6 +18,7 @@ const userProfileSchema = new Schema({
     information: { 
         bio: { type: String, default: "" },
         location: { type: String, default: "" },
+        website: { type: String, default: "" } 
     }
 });
 
