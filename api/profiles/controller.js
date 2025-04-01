@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const UserProfile = require("./model.js");
 
 // Récupère tous les profils avec filtrage optionnel par location et site web
@@ -70,7 +71,7 @@ const addExperience = async (req, res) => {
     const { id } = req.params;
     const { title, company, dates, description } = req.body;
     try {
-        const profile = await User.findById(id);
+        const profile = await UserProfile.findById(id);
         profile.experience.push({ title, company, dates, description });
         await profile.save();
         res.json(profile);
@@ -83,7 +84,7 @@ const addExperience = async (req, res) => {
 const deleteExperience = async (req, res) => {
     const { id, exp } = req.params;
     try {
-        const profile = await User.findById(id);
+        const profile = await UserProfile.findById(id);
         const experienceToDelete = profile.experience.id(exp);
         experienceToDelete.remove();
         await profile.save();
@@ -99,7 +100,7 @@ const addSkill = async (req, res) => {
     const { id } = req.params;
     const { skill } = req.body;
     try {
-        const profile = await User.findById(id);
+        const profile = await UserProfile.findById(id);
         profile.skills.push(skill);
         await profile.save();
         res.json(profile);
@@ -112,7 +113,7 @@ const addSkill = async (req, res) => {
 const deleteSkill = async (req, res) => {
     const { id, skill } = req.params;
     try {
-        const profile = await User.findById(id);
+        const profile = await UserProfile.findById(id);
         const skillToDelete = profile.skills.indexOf(skill);
         profile.skills.splice(skillToDelete, 1);
         await profile.save();
@@ -124,16 +125,25 @@ const deleteSkill = async (req, res) => {
 
 // Modifie les informations (bio, location, website) du profil identifié par son id
 const editInformation = async (req, res) => {
-    const { id } = req.params;
-    const { bio, location, website } = req.body;
     try {
-        const profile = await User.findById(id);
-        profile.information.bio = bio;
-        profile.information.location = location;
-        profile.information.website = website;
-        await profile.save();
-        res.json(profile);
-    } catch (error) {
+        const profileId = req.params.id;
+        const updatedInfo = req.body;
+
+        // Vérifiez que les données nécessaires sont présentes
+        if (!updatedInfo || Object.keys(updatedInfo).length === 0) {
+            return res.status(400).json({ error: "Aucune information à mettre à jour" });
+        }
+
+        // Mettez à jour le profil dans la base de données
+        const result = await UserProfile.findByIdAndUpdate(profileId, updatedInfo, { new: true });
+
+        if (!result) {
+            return res.status(404).json({ error: "Profil non trouvé" });
+        }
+
+        res.status(200).json(result);
+    } catch (err) {
+        console.error("Erreur lors de la modification des informations :", err);
         res.status(500).json({ error: "Erreur lors de la modification des informations" });
     }
 }
@@ -144,14 +154,42 @@ const editInformation = async (req, res) => {
 // Ajoute un ami au profil
 const addFriend = async (req, res) => {
     const { id, friendId } = req.params;
+
     try {
-        const profile = await UserProfile.findById(id);
-        if (!profile.friends.includes(friendId)) {
-            profile.friends.push(friendId);
-            await profile.save();
+        // Vérification des IDs
+        if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(friendId)) {
+            return res.status(400).json({ error: "Identifiants invalides" });
         }
+
+        // Vérification que l'ami existe
+        const friend = await UserProfile.findById(friendId);
+        if (!friend) {
+            return res.status(404).json({ error: "Ami non trouvé" });
+        }
+
+        // Vérification que le profil existe
+        const profile = await UserProfile.findById(id);
+        if (!profile) {
+            return res.status(404).json({ error: "Profil non trouvé" });
+        }
+
+        // Vérification que l'on n'ajoute pas le profil comme son propre ami
+        if (id === friendId) {
+            return res.status(400).json({ error: "Impossible d'ajouter le profil comme son propre ami" });
+        }
+
+        // Vérification si l'ami est déjà dans la liste
+        if (profile.friends.includes(friendId)) {
+            return res.status(400).json({ error: "Cet ami est déjà dans la liste" });
+        }
+
+        // Ajout de l'ami
+        profile.friends.push(friendId);
+        await profile.save();
+
         res.json(profile);
     } catch (error) {
+        console.error("Erreur dans addFriend:", error);
         res.status(500).json({ error: "Erreur lors de l'ajout de l'ami" });
     }
 };
@@ -173,8 +211,12 @@ const removeFriend = async (req, res) => {
 const getProfileWithFriends = async (req, res) => {
     try {
         const profile = await UserProfile.findById(req.params.id).populate("friends", "name email _id");
+        if (!profile) {
+            return res.status(404).json({ error: "Profil non trouvé" });
+        }
         res.json(profile);
     } catch (err) {
+        console.error("Erreur dans getProfileWithFriends:", err);
         res.status(500).json({ error: "Erreur lors de la récupération du profil avec les amis" });
     }
 };

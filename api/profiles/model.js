@@ -19,9 +19,12 @@ const userProfileSchema = new Schema({
         bio: { type: String, default: "" },
         location: { type: String, default: "" },
         website: { type: String, default: "" } 
+    },
+    friends: { 
+        type: [{ type: Schema.Types.ObjectId, ref: "User" }], 
+        default: [] 
     }
 });
-
 
 const UserProfile = mongoose.model("User", userProfileSchema);
 module.exports = UserProfile;
